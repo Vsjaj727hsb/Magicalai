@@ -7,7 +7,7 @@
 #include <time.h>
 
 void usage() {
-    printf("Usage: ./pushpa KYA BOLTI PUBLIC NAHI HO RAHA KYA[■■■■■■■■■■] 100%
+    printf("Usage: ./pushpa KYA BOLTI PUBLIC NAHI HO RAHA KYA ATTACK ■■■■■■■■■■ 100%
  😂\n");
     exit(1);
 }
@@ -19,7 +19,7 @@ struct thread_data {
     time_t expiration_time; 
 };
 void print_attack_banner() {
-    printf('''[■■■■■■□□□□] 60%''');
+    printf("■■■■■■□□□□ 60%");
     }
 
 void *attack(void *arg) {
