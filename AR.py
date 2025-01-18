@@ -231,8 +231,10 @@ COOLDOWN_DURATION = 100
 @bot.message_handler(commands=['bgmi'])
 def handle_bgmi_command(message):
     user_id = str(message.chat.id)
-    current_time = datetime.datetime.now()
-
+    if user_id not in allowed_user_ids:
+        response = "❌ 𝘆𝗼𝘂 𝗮𝗿𝗲 𝗻𝗼𝘁 𝗮𝘂𝘁𝗵𝗼𝗿𝗶𝘇𝗲𝗱 𝘁𝗼 𝘂𝘀𝗲 𝘁𝗵𝗶𝘀 𝗰𝗼𝗺𝗺𝗮𝗻𝗱"
+        bot.reply_to(message, response, reply_markup=get_inline_keyboard())
+        return
     # Check if the user is in the cooldown tracker
     if user_id in cooldown_tracker:
         last_used_time = cooldown_tracker[user_id]
