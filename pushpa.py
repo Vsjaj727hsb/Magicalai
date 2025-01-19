@@ -4,10 +4,10 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 import os
 
 # Configuration
-TELEGRAM_BOT_TOKEN = os.getenv("7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k")  # Fetch token from environment variable
+TELEGRAM_BOT_TOKEN = ("7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k")  # Fetch token from environment variable
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
-CHANNEL_ID = "@-1002069430887"  # Replace with your channel username
+CHANNEL_ID = "https://t.me/+03wLVBPurPk2NWRl"  # Replace with your channel username
 attack_in_progress = False
 
 # Check if the token is set
@@ -48,7 +48,7 @@ async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
     message = (
-        "*Welcome to GODxCHEATS DDOS Bot*\n\n"
+        "*WELCOME TOGODxCHEATS DDOS*\n\n"
         "*PRIMIUM DDOS BOT*\n"
         "*Owner*: @GODxAloneBOY\n"
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
@@ -181,7 +181,7 @@ async def run_attack(chat_id, ip, port, time, context):
 
     finally:
         attack_in_progress = False
-        await context.bot.send_message(chat_id=chat_id, text="*✅ Attack Finished.*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*♥️ Attack Finished ♥️*", parse_mode='Markdown')
 
 # Main Function
 def main():
