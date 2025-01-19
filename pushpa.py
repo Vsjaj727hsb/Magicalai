@@ -4,14 +4,19 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 import os
 
 # Configuration
-TELEGRAM_BOT_TOKEN = os.getenv("7819992909:AAHn51FAfPId42gmKUT5wPmCoyC4_g9OeN0")  # Use environment variable for token
+TELEGRAM_BOT_TOKEN = os.getenv("7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k")  # Fetch token from environment variable
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
-CHANNEL_ID = "https://t.me/+03wLVBPurPk2NWRl"  # Replace with your channel username
+CHANNEL_ID = "@-1002069430887"  # Replace with your channel username
 attack_in_progress = False
+
+# Check if the token is set
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set. Please set the token and try again.")
 
 # Load and Save Functions for Approved IDs
 def load_approved_ids():
+    """Load approved user and group IDs from a file."""
     try:
         with open(APPROVED_IDS_FILE, 'r') as file:
             return set(file.read().splitlines())
@@ -19,6 +24,7 @@ def load_approved_ids():
         return set()
 
 def save_approved_ids():
+    """Save approved user and group IDs to a file."""
     with open(APPROVED_IDS_FILE, 'w') as file:
         file.write("\n".join(approved_ids))
 
@@ -26,9 +32,11 @@ approved_ids = load_approved_ids()
 
 # Helper Function: Check User Permissions
 async def is_admin(chat_id):
+    """Check if the user is the admin."""
     return chat_id == ADMIN_USER_ID
 
 async def is_member_of_channel(user_id: int, context: CallbackContext):
+    """Check if the user is a member of the specified channel."""
     try:
         member = await context.bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
         return member.status in ["member", "administrator", "creator"]
@@ -40,7 +48,7 @@ async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
     message = (
-        "*WELCOME TOGODxCHEATS DDOS*\n\n"
+        "*Welcome to GODxCHEATS DDOS Bot*\n\n"
         "*PRIMIUM DDOS BOT*\n"
         "*Owner*: @GODxAloneBOY\n"
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
