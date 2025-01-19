@@ -1,10 +1,13 @@
 import asyncio
-from telegram import Update
+from telegram import Update, Bot
 from telegram.ext import Application, CommandHandler, CallbackContext
+import os
+import json
 
 TELEGRAM_BOT_TOKEN = '7819992909:AAHn51FAfPId42gmKUT5wPmCoyC4_g9OeN0'
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
+APPROVED_BOTS_FILE = 'approved_bots.txt'
 attack_in_progress = False
 
 # Load approved IDs (users and groups) from file
@@ -19,29 +22,27 @@ def save_approved_ids(approved_ids):
     with open(APPROVED_IDS_FILE, 'w') as f:
         f.writelines(f"{id_}\n" for id_ in approved_ids)
 
-def load_approved_ids():
-    try:
-        with open(APPROVED_IDS_FILE) as f:
-            return set(line.strip() for line in f)
-    except FileNotFoundError:
-        return set()
-
-def save_approved_ids(approved_ids):
-    with open(APPROVED_IDS_FILE, 'w') as f:
-        f.writelines(f"{id_}\n" for id_ in approved_ids)
-
+# Load approved bot tokens from file
 def load_approved_bots():
     try:
         with open(APPROVED_BOTS_FILE) as f:
-            return set(line.strip() for line in f)
+            return json.load(f)
     except FileNotFoundError:
-        return set()
+        return {}
 
 def save_approved_bots(approved_bots):
     with open(APPROVED_BOTS_FILE, 'w') as f:
-        f.writelines(f"{bot}\n" for bot in approved_bots)
+        json.dump(approved_bots, f)
 
-approved_ids = load_approved_ids()
+# Validate Telegram Bot Token
+async def is_valid_bot_token(token):
+    try:
+        bot = Bot(token=token)
+        await bot.get_me()
+        return True
+    except Exception:
+        return False
+
 approved_ids = load_approved_ids()
 approved_bots = load_approved_bots()
 
@@ -55,7 +56,7 @@ async def start(update: Update, context: CallbackContext):
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
 
-# Approve command to approve users and group chat IDs
+# Approve command to approve users and bot tokens
 async def approve(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     args = context.args
@@ -65,15 +66,29 @@ async def approve(update: Update, context: CallbackContext):
         return
 
     if len(args) != 1:
-        await context.bot.send_message(chat_id=chat_id, text="* Usage » /approve id (user or group chat ID)*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*Usage » /approve [ID or Bot Token]*", parse_mode='Markdown')
         return
 
-    target_id = args[0].strip()
-    approved_ids.add(target_id)
-    save_approved_ids(approved_ids)
-    await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} approved.*", parse_mode='Markdown')
+    target_id_or_token = args[0].strip()
 
-# Remove command to remove approved users and group chat IDs
+    if ':' in target_id_or_token:  # Likely a Bot Token
+        if await is_valid_bot_token(target_id_or_token):
+            bot_username = (await Bot(target_id_or_token).get_me()).username
+            approved_bots[target_id_or_token] = bot_username
+            save_approved_bots(approved_bots)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=f"*✅ Bot {bot_username} approved with token.*",
+                parse_mode='Markdown'
+            )
+        else:
+            await context.bot.send_message(chat_id=chat_id, text="*⚠️ Invalid Bot Token.*", parse_mode='Markdown')
+    else:  # Assume it's a User or Group ID
+        approved_ids.add(target_id_or_token)
+        save_approved_ids(approved_ids)
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id_or_token} approved.*", parse_mode='Markdown')
+
+# Remove command to remove approved users or bot tokens
 async def remove(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     args = context.args
@@ -83,16 +98,21 @@ async def remove(update: Update, context: CallbackContext):
         return
 
     if len(args) != 1:
-        await context.bot.send_message(chat_id=chat_id, text="* Usage » /remove id (user or group chat ID)*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text="*Usage » /remove [ID or Bot Token]*", parse_mode='Markdown')
         return
 
-    target_id = args[0].strip()
-    if target_id in approved_ids:
-        approved_ids.discard(target_id)
+    target_id_or_token = args[0].strip()
+
+    if target_id_or_token in approved_ids:
+        approved_ids.discard(target_id_or_token)
         save_approved_ids(approved_ids)
-        await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id} removed.*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ ID {target_id_or_token} removed.*", parse_mode='Markdown')
+    elif target_id_or_token in approved_bots:
+        bot_username = approved_bots.pop(target_id_or_token)
+        save_approved_bots(approved_bots)
+        await context.bot.send_message(chat_id=chat_id, text=f"*✅ Bot {bot_username} removed.*", parse_mode='Markdown')
     else:
-        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ ID {target_id} is not approved.*", parse_mode='Markdown')
+        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ ID or Bot Token not found in approved list.*", parse_mode='Markdown')
 
 # Attack command (only for approved users and groups)
 async def attack(update: Update, context: CallbackContext):
@@ -161,4 +181,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
