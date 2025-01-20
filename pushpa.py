@@ -4,11 +4,15 @@ from telegram.ext import Application, CommandHandler, CallbackContext
 import os
 
 # Configuration
-TELEGRAM_BOT_TOKEN = "7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k"  # Replace with your bot token
+TELEGRAM_BOT_TOKEN = ("7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k")  # Fetch token from environment variable
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
-CHANNEL_ID = @Godxcheatsaloneboy  # Replace with your channel's numeric ID
+CHANNEL_ID = "@Godxcheatsaloneboy"  # Replace with your channel username
 attack_in_progress = False
+
+# Check if the token is set
+if not TELEGRAM_BOT_TOKEN:
+    raise ValueError("TELEGRAM_BOT_TOKEN environment variable not set. Please set the token and try again.")
 
 # Load and Save Functions for Approved IDs
 def load_approved_ids():
@@ -36,8 +40,7 @@ async def is_member_of_channel(user_id: int, context: CallbackContext):
     try:
         member = await context.bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
         return member.status in ["member", "administrator", "creator"]
-    except Exception as e:
-        print(f"Error checking membership: {e}")  # Debugging
+    except Exception:
         return False
 
 # Commands
@@ -48,7 +51,7 @@ async def start(update: Update, context: CallbackContext):
         "*WELCOME TOGODxCHEATS DDOS*\n\n"
         "*PRIMIUM DDOS BOT*\n"
         "*Owner*: @GODxAloneBOY\n"
-        f"🔔 *Join our channel*: https://t.me/+03wLVBPurPk2NWRl to use advanced features.\n\n"
+        f"🔔 *Join our channel*: {CHANNEL_ID} to use advanced features.\n\n"
         "Use /help to see available commands."
     )
     await context.bot.send_message(chat_id=chat_id, text=message, parse_mode='Markdown')
@@ -133,11 +136,7 @@ async def attack(update: Update, context: CallbackContext):
         await context.bot.send_message(chat_id=chat_id, text="*⚠️ You need permission to use this bot.*", parse_mode='Markdown')
         return
 
-    # Debug membership check
-    is_member = await is_member_of_channel(user_id, context)
-    print(f"User ID: {user_id}, Is Member: {is_member}")
-
-    if not is_member:
+    if not await is_member_of_channel(user_id, context):
         await context.bot.send_message(chat_id=chat_id, text=f"*⚠️ You must join our channel ({CHANNEL_ID}) to use this feature.*", parse_mode='Markdown')
         return
 
