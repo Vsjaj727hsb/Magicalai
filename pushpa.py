@@ -7,7 +7,7 @@ import os
 TELEGRAM_BOT_TOKEN = "7140094105:AAEcteoZXkxDKcv97XhGhkC-wokOUW-2a6k"  # Replace with your bot token
 ADMIN_USER_ID = 1662672529
 APPROVED_IDS_FILE = 'approved_ids.txt'
-CHANNEL_ID = -1001234567890  # Replace with your channel's numeric ID
+CHANNEL_ID = @Godxcheatsaloneboy  # Replace with your channel's numeric ID
 attack_in_progress = False
 
 # Load and Save Functions for Approved IDs
